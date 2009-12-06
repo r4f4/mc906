@@ -8,17 +8,13 @@ class Document(object):
     """
     def __init__(self, name, ignore_words=set()):
         # FIXME: Check for errors
-        freq = dict()
+        self.freq = dict()
         with open(name, 'r') as f:
             for l in f.readlines():
-                for w in re.split(r'[^a-z]+', l.lower()):
+                for w in re.split(r'[^a-z]+', l.lower().strip()):
                     word = unicode(w)
-                    if not word in ignore_words:
-                        if freq.has_key(word):
-                            freq[word] += 1
-                        else:
-                            freq[word] = 1
-        self.wfreq = freq
+                    if not word is u'' and word not in ignore_words:
+                        self.freq[word] = self.freq.get(word, 0) + 1
 
     def most_frequent_words_get(self, percent):
         return map(lambda l: l[0], sorted(self.wfreq.iteritems(),
