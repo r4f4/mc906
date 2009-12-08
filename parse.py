@@ -2,6 +2,7 @@ import os
 import re
 from numpy import dot, array
 from math import sqrt
+from Stemmer import Stemmer
 
 class Document(object):
     """
@@ -18,12 +19,14 @@ class Document(object):
         self._freq = dict()
         if ignore_words is None:
             ignore_words = set()
+        stemmer = Stemmer('english')
 
         with open(pathname, 'r') as f:
             for l in f.readlines():
                 for w in re.split(r'[^a-z]+', l.strip().lower()):
                     word = unicode(w)
                     if not word is u'' and word not in ignore_words:
+                        word = stemmer.stemWord(word)
                         self.freq[word] = self.freq.get(word, 0) + 1
 
     def __len__(self):
