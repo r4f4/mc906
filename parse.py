@@ -114,7 +114,7 @@ class Parser(object):
 
         self._docset = set()
         self._ignored = None
-        self._words_set = set()
+        self._words = dict()
 
         with open(wignore_file, 'r') as f:
             self._ignored = set([unicode(w.strip()) for w in f.readlines()])
@@ -127,7 +127,10 @@ class Parser(object):
     def _parse_single(self, docname):
         doc = Document(docname, self._ignored)
         # Add more words to the set of significant and distinct words
-        self._words_set |= set(doc.words())
+        # and keep track of their counting
+        freq = doc.freq
+        map(lambda w: self._words.__setitem__(w,
+            self._words.get(w, 0) + freq[w]), doc.words())
         self._docset.add(doc)
 
     def parse(self, doclist):
@@ -149,14 +152,18 @@ class Parser(object):
             So parse all documents needed first.
         """
 
-        # Put words on a list so they are always scanned on the same order
-        word_list = [w for w in self._words_set]
-        # Normalized frequencies
+        word_list = self._words.keys()
         for doc in self._docset:
             freq = doc.freq
-            _array = array([float(freq.get(w, 0)) for w in word_list])
-            norm = sqrt(dot(_array, _array.conj()))
-            doc.char_vector = array([(f / norm) for f in _array])
+            # Each term is weightened by the inverse document frequency in the
+            # document collection
+            darray = array(map(lambda w: float(freq.get(w, 0)) / self._words[w],
+                word_list))
+            norm = sqrt(dot(darray, darray.conj()))
+            # Normalize the vector
+            map(lambda (i, v): darray.put(i, v / norm), enumerate(darray))
+            doc.char_vector = darray
+        del word_list
 
         return self._docset
 
