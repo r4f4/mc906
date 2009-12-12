@@ -8,10 +8,11 @@ class Document(object):
     """
     A document class
     """
-    def __init__(self, pathname, ignore_words=None):
+    def __init__(self, pathname, ignore_words=None, stem=True):
         """
         :pathname The pathname of the document.
         :ignore_words A set of words to ignore when parsing the document.
+        :stem If True the words will be stemmed.
         """
 
         self._filename = pathname
@@ -26,7 +27,8 @@ class Document(object):
                 for w in re.split(r'[^a-z]+', l.strip().lower()):
                     word = unicode(w)
                     if not word is u'' and word not in ignore_words:
-                        word = stemmer.stemWord(word)
+                        if stem is True:
+                            word = stemmer.stemWord(word)
                         self.freq[word] = self.freq.get(word, 0) + 1
 
     def __len__(self):
@@ -48,7 +50,7 @@ class Document(object):
     def distance(self, other):
         """ Calculate the distance from the current object with other.
 
-        :other A Document instance with which we want to calculate the
+        :other A Document instance from which we want to calculate the
         distance.
 
         The distance is calculated as a cosine measure:
@@ -56,10 +58,12 @@ class Document(object):
             dist = cos(d1, d2) = (d1 . d2) / ||d1|| ||d2||
         """
 
-        norm = lambda vector: sqrt(dot(vector, vector.conj()))
         if not isinstance(other, type(self)):
             raise TypeError("expected a Parser but got a %s instead." %
                     type(other))
+
+        # Store this function to avoid duplication of code
+        norm = lambda vector: sqrt(dot(vector, vector.conj()))
 
         return dot(self._char_vector, other._char_vector) / \
                 (norm(self._char_vector) * norm(other._char_vector))
