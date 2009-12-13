@@ -4,29 +4,43 @@ class Kmeans(object):
     """
     k-means algorithm
     """
-    
-    def __init__(self, data, clusters, metric, avg):
-        
-        self.centroids = random.sample(data, clusters)
+
+    def __init__(self, data, k, distfunc, centroidfunc=calc_centroid,
+            chooser=choose_initial, tol=0.0005):
+        """
+        The K-means algorithm
+
+        :data A data set
+        :k The number of clusters
+        :distfunc A function to calculate the distance between two elements
+        from data.
+        :centroidfunc A function to calculate the centroid of the cluster. It
+        will receive a cluster.
+        :chooser A function to choose the initial k centroids. It must receive
+        the data set, the number of clusters k and the distfunc.
+        :tol Error tolerance
+        """
+
+        self.centroids = chooser(data, k, distfunc)
 
         err = -1
         while True:
-            bins = [set() for k in xrange(clusters)]
-            
+            bins = [set() for _ in xrange(k)]
+
             for i in data:
-                ml = [(metric(c,i), ic) for ic,c in enumerate(self.centroids)]
-                ml_min,_ =  min(ml)
-                c = random.choice( [k for m,k in ml if m == ml_min] )
+                ml = [(distfunc(c, i), ic) for ic, c in enumerate(self.centroids)]
+                ml_min, _ =  min(ml)
+                c = random.choice([j for m, j in ml if m == ml_min])
                 bins[c].add(i)
 
-            for bi,b in enumerate(bins):
-                self.centroids[bi] = avg(b)
-                
+            for bi, b in enumerate(bins):
+                self.centroids[bi] = centroidfunc(b)
+
             olderr = err
-            err = sum( [sum( [metric(d,self.centroids[c]) for d in b] )
-                        for c,b in enumerate(bins)] )
-            
-            if err - olderr < 0.0005:
+            err = sum([sum([distfunc(d, self.centroids[c]) for d in b])
+                      for c, b in enumerate(bins)])
+
+            if err - olderr < tol:
                 break
 
     def result(self):
