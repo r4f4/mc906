@@ -109,3 +109,18 @@ def get_clusters(centroids, data):
         _, j = min([(distance(c, i), j) for j, c in enumerate(centroids)])
         clusters[j].add(i)
     return clusters
+
+
+def encode_document(doc):
+    s = StringIO()
+    cPickle.dump(doc, s)
+    compressed_str = zlib.compress(s.getvalue())
+    return compressed_str
+
+def decode_document(compressed_str):
+    uncompressed_str = zlib.decompress(compressed_str)
+    s = StringIO(uncompressed_str)
+    doc = cPickle.load(s)
+    return doc
+
+

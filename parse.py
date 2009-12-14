@@ -1,6 +1,9 @@
 from re import split
 from numpy import dot, array
 from util import norm, stemWord
+from cStringIO import StringIO
+import cPickle
+import zlib
 
 class Document(object):
     """
@@ -106,6 +109,17 @@ class Document(object):
 
         return self._filename
 
+def encode_document(doc):
+    s = StringIO()
+    cPickle.dump(doc, s)
+    compressed_str = zlib.compress(s.getvalue())
+    return compressed_str
+
+def decode_document(compressed_str):
+    uncompressed_str = zlib.decompress(compressed_str)
+    s = StringIO(uncompressed_str)
+    doc = cPickle.load(s)
+    return doc
 
 class Parser(object):
     """
@@ -148,7 +162,7 @@ class Parser(object):
             freq = doc.freq
             map(lambda w: self._words.__setitem__(w,
                 self._words.get(w, 0) + freq[w]), doc.words())
-            self._docset.append(doc)
+            self._docset.append(encode_document(doc))
 
     @property
     def docset(self):

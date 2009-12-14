@@ -5,7 +5,7 @@ import numpy
 import pickle
 import sys
 from kmeans import Kmeans, choose_initial, choose_initial_pp
-from parse import Parser
+from parse import Parser, decode_document, encode_document
 from re import split
 from util import distance, calc_centroid, normalize, get_clusters
 from gc import collect
@@ -79,7 +79,13 @@ if __name__ == "__main__":
         for idf in True, False:
             print 'Normalizing frequencies...',
             sys.stdout.flush()
-            map(lambda doc: normalize(doc, parser.words, idf), parser.docset)
+            for i, encoded_d in enumerate(parser.docset):
+                print i
+                doc = decode_document(encoded_d)
+                normalize(doc, parser.words, idf)
+                parser.docset[i] = encode_document(doc)
+                collect()
+
             print 'done'
             for chooser in choose_initial_pp, choose_initial:
                 for k in 10, 20, 30, 40:
