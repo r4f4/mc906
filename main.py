@@ -3,6 +3,7 @@
 import os
 import numpy
 import pickle
+import sys
 from kmeans import Kmeans, choose_initial, choose_initial_pp
 from parse import Parser
 from re import split
@@ -76,7 +77,10 @@ if __name__ == "__main__":
             with open(fname, 'r') as f:
                 parser = pickle.load(f)
         for idf in True, False:
+            print 'Normalizing frequencies...',
+            sys.stdout.flush()
             map(lambda doc: normalize(doc, parser.words, idf), parser.docset)
+            print 'done'
             for chooser in choose_initial_pp, choose_initial:
                 for k in 10, 20, 30, 40:
                     errors = []
@@ -87,6 +91,7 @@ if __name__ == "__main__":
                         print 'Chooser: normal'
                     else:
                         print 'Chooser: plusplus'
+                    sys.stdout.flush()
                     for _ in xrange(13):
                         kmeans = Kmeans(parser.docset, k, distance,
                                 calc_centroid, chooser)
@@ -95,5 +100,6 @@ if __name__ == "__main__":
                         errors.append(sum(calc_error(freqs)))
                     print 'Error mean: %d and median: %d' % \
                         (numpy.mean(errors), numpy.median(errors))
+                    collect()
         del parser
         collect()
