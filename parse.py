@@ -1,8 +1,6 @@
-import os
-import re
+from re import split
 from numpy import dot, array
-from math import sqrt
-from Stemmer import Stemmer
+from util import norm, stemWord
 
 class Document(object):
     """
@@ -12,29 +10,57 @@ class Document(object):
         """
         :pathname The pathname of the document.
         :ignore_words A set of words to ignore when parsing the document.
-        :stem If True the words will be stemmed.
+        :stem The words will be stemmed if it is True.
         """
 
         self._filename = pathname
         self._char_vector = None
         self._freq = dict()
-        if ignore_words is None:
-            ignore_words = set()
-        stemmer = Stemmer('english')
-
-        with open(pathname, 'r') as f:
-            for l in f.readlines():
-                for w in re.split(r'[^a-z]+', l.strip().lower()):
-                    word = unicode(w)
-                    if not word is u'' and word not in ignore_words:
-                        if stem is True:
-                            word = stemmer.stemWord(word)
-                        self.freq[word] = self.freq.get(word, 0) + 1
+        self.stem = stem
+        self._ignore_words = ignore_words or set()
 
     def __len__(self):
         """ The number of words in the current document """
 
         return len(self.freq)
+
+    def __add__(self, val):
+
+        docres = Document(None)
+        # Add words frequencies in both documents
+        if isinstance(val, type(self)):
+            docres.char_vector = self.char_vector + val.char_vector
+        # Increase each frequence by other in case other is a scalar
+        elif isinstance(val, int) or isinstance(val, float):
+            docres.char_vector = self.char_vector + val
+        return docres
+
+    def __sub__(self, val):
+
+        docres = Document(None)
+        if isinstance(val, type(self)):
+            docres.char_vector = self.char_vector + val.char_vector
+        else:
+            docres.char_vector = self.char_vector - val
+        return docres
+
+    def __div__(self, val):
+        """ The division by a scalar or other document """
+
+        docres = Document(None)
+        docres.char_vector = self.char_vector / val
+        return docres
+
+    def read(self):
+        with open(self.filename, 'r') as f:
+            for l in f.readlines():
+                for w in split(r'[^a-z]+', l.strip().lower()):
+                    word = unicode(w)
+                    if not word is u'' and word not in self._ignore_words:
+                        if self.stem is True:
+                            word = stemWord(word)
+                        self.freq[word] = self.freq.get(word, 0) + 1
+                    del word
 
     def words(self):
         """ Get a list of words parsed from the current document """
@@ -46,27 +72,6 @@ class Document(object):
         words parsed from the current document. """
 
         return self.freq.iteritems()
-
-    def distance(self, other):
-        """ Calculate the distance from the current object with other.
-
-        :other A Document instance from which we want to calculate the
-        distance.
-
-        The distance is calculated as a cosine measure:
-
-            dist = cos(d1, d2) = (d1 . d2) / ||d1|| ||d2||
-        """
-
-        if not isinstance(other, type(self)):
-            raise TypeError("expected a Parser but got a %s instead." %
-                    type(other))
-
-        # Store this function to avoid duplication of code
-        norm = lambda vector: sqrt(dot(vector, vector.conj()))
-
-        return dot(self._char_vector, other._char_vector) / \
-                (norm(self._char_vector) * norm(other._char_vector))
 
     @property
     def freq(self):
@@ -101,6 +106,7 @@ class Document(object):
 
         return self._filename
 
+
 class Parser(object):
     """
     A text file parser class.
@@ -124,55 +130,33 @@ class Parser(object):
 
         return len(self._docset)
 
-    def _parse_single(self, docname):
-        doc = Document(docname, self._ignored)
-        # Add more words to the set of significant and distinct words
-        # and keep track of their counting
-        freq = doc.freq
-        map(lambda w: self._words.__setitem__(w,
-            self._words.get(w, 0) + freq[w]), doc.words())
-        self._docset.add(doc)
+    def parse(self, doclist, stem=True, verbose=True):
+        """ Parse a list of documents """
 
-    def parse(self, doclist):
-        """ Parse a single document or a list of them """
-
-        if isinstance(doclist, list):
-            map(lambda doc: self._parse_single(doc), doclist)
-        else:
-            self._parse_single(doclist)
+        for docname in doclist:
+            if verbose is True:
+                print 'Parsing %s' % docname
+            doc = Document(docname, self._ignored, stem)
+            doc.read()
+            # Add more words to the set of significant and distinct words
+            # and keep track of their counting
+            freq = doc.freq
+            map(lambda w: self._words.__setitem__(w,
+                self._words.get(w, 0) + freq[w]), doc.words())
+            self._docset.add(doc)
 
     @property
     def docset(self):
         """
-        Get a set of Documents with their characteristic vector set accordinly.
-
-        Note:
-            be aware that parsing additional documents after calling this
-            method will result in different characterist vectors from before.
-            So parse all documents needed first.
+        Get a set of Documents.
         """
-
-        word_list = self._words.keys()
-        for doc in self._docset:
-            freq = doc.freq
-            # Each term is weightened by the inverse document frequency in the
-            # document collection
-            darray = array(map(lambda w: float(freq.get(w, 0)) / self._words[w],
-                word_list))
-            norm = sqrt(dot(darray, darray.conj()))
-            # Normalize the vector
-            map(lambda (i, v): darray.put(i, v / norm), enumerate(darray))
-            doc.char_vector = darray
-        del word_list
 
         return self._docset
 
+    @property
+    def words(self):
+        """
+        Get overall word frequencies
+        """
 
-if __name__ == "__main__":
-    with open('english', 'r') as f:
-        ignore_words = set([unicode(word.strip()) for word in f.readlines()])
-    path = './cluster-txt/messages/alt-atheism-51119.txt'
-    d = Document(path, ignore_words)
-    print(d.most_frequent_words_get(1))
-
-    print '\n\nDone\n\n'
+        return self._words
