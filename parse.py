@@ -118,9 +118,9 @@ class Parser(object):
         ignored when parsing.
         """
 
-        self._docset = set()
+        self._docset = None
         self._ignored = None
-        self._words = dict()
+        self._words = None
 
         with open(wignore_file, 'r') as f:
             self._ignored = set([unicode(w.strip()) for w in f.readlines()])
@@ -130,8 +130,13 @@ class Parser(object):
 
         return len(self._docset)
 
-    def parse(self, doclist, stem=True, verbose=True):
+    def parse(self, doclist, stem=True, verbose=False):
         """ Parse a list of documents """
+
+        del self._words
+        del self._docset
+        self._docset = []
+        self._words = {}
 
         for docname in doclist:
             if verbose is True:
@@ -143,7 +148,7 @@ class Parser(object):
             freq = doc.freq
             map(lambda w: self._words.__setitem__(w,
                 self._words.get(w, 0) + freq[w]), doc.words())
-            self._docset.add(doc)
+            self._docset.append(doc)
 
     @property
     def docset(self):

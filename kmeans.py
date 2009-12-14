@@ -20,22 +20,32 @@ def choose_initial_pp(data, k, distfunc):
     :k The number of clusters
     :distfunc Function to calculate the distance between two elements.
     """
+    from bisect import bisect
 
     # Calculate squared distance
-    distance2 = lambda(c, x): distance(c, x)**2
+    distance2 = lambda c, x: distfunc(c, x)
 
     # The first centroid is a random one
     centroids = [random.choice(data)]
 
-    while len(centroids) < k:
+    tries = 0
+    while len(centroids) < k and tries < (k * 5):
         mindists = [min((distance2(c, x), x) for c in centroids)
-                for x in data if x is not c]
+                    for x in data]
         # Divide because we add it twice: first for (c, x) and then for (x, c)
-        totaldist = float(sum(mindists) / 2)
-        for d, x in mindists:
-            if x not in centroids and random.random() < d / totaldist:
-                centroids.append(x)
-                break
+        totaldist = float(sum(d for d, _ in mindists))
+        probs = [(d / totaldist) for d, _ in mindists]
+        addedProb = []
+        last = 0
+        for p in probs:
+            last += p
+            addedProb.append(last)
+        pos = bisect(addedProb, random.random())
+        centroids.append(data[pos])
+        tries += 1
+
+    if len(centroids) < k:
+        centroids.extend(random.sample(data, k - len(centroids)))
 
     return centroids
 
@@ -65,12 +75,11 @@ class Kmeans(object):
 
         self.centroids = chooser(data, k, distfunc)
 
-        print 'There are %d initial centroids' % len(self.centroids)
         err = -1
         niter = 1
         while True:
             bins = [set() for _ in xrange(k)]
-            print 'Iteration #%d' % niter
+            #print 'Iteration #%d' % niter
             niter += 1
 
             for i in data:
