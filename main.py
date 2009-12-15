@@ -26,8 +26,7 @@ def get_docs_frequencies(clusters):
     docs = []
     for c in clusters:
         freq = {}
-        for encoded_doc in c:
-            doc = decode_document(encoded_doc)
+        for doc in c:
             name = os.path.basename(split(r'-[0-9]+.txt$', doc.filename)[0])
             freq[name] = freq.get(name, 0) + 1
         docs.append(freq)
@@ -54,16 +53,26 @@ def slice_sorted_words(dictio, delpercent):
 
 
 if __name__ == "__main__":
+    import getopt, sys
+    opts, args = getopt.getopt(sys.argv[1:], "s")
+
+    use_stemming = False
+    for o, a in opts:
+        if o in ('-s','--stemming'):
+            use_stemming = True
+
+    print 'use stemming: %d' % use_stemming
+    
     filelist = [(path + f) for f in os.listdir(path)]
 
     parser = Parser(fstopname)
-    for stem in True, False:
+    for stem in [use_stemming,]:
         for idf in True, False:
             print 'Parsing files...',
             stdout.flush()
             parser.parse(filelist, stem)
             # Ignore the 10% least and most frequent words
-            parser.words = slice_sorted_words(parser.words, 10)
+            parser.words = slice_sorted_words(parser.words, 30)
             print 'done'
 
             print 'Normalizing frequencies...',
@@ -71,7 +80,7 @@ if __name__ == "__main__":
             # Don't modify the original set
             for i, doc in enumerate(parser.docset):
                 normalize(doc, parser.words, idf)
-                parser.docset[i] = (encode_document(doc))
+                print i
             gc.collect()
             print 'done'
 

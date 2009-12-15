@@ -29,26 +29,28 @@ class Document(object):
         docres = Document(None)
         # Add words frequencies in both documents
         if isinstance(val, type(self)):
-            docres.char_vector = self.char_vector + val.char_vector
+            docres.char_vector = encode_array(decode_array(self.char_vector) +
+            decode_array(val.char_vector))
         # Increase each frequence by other in case other is a scalar
         elif isinstance(val, int) or isinstance(val, float):
-            docres.char_vector = self.char_vector + val
+            docres.char_vector = encode_array(decode_array(self.char_vector) +
+            decode_array(val))
         return docres
 
-    def __sub__(self, val):
-
-        docres = Document(None)
-        if isinstance(val, type(self)):
-            docres.char_vector = self.char_vector + val.char_vector
-        else:
-            docres.char_vector = self.char_vector - val
-        return docres
+    #def __sub__(self, val):
+    #
+    #    docres = Document(None)
+    #    if isinstance(val, type(self)):
+    #        docres.char_vector = self.char_vector + val.char_vector
+    #    else:
+    #        docres.char_vector = self.char_vector - val
+    #    return docres
 
     def __div__(self, val):
         """ The division by a scalar or other document """
 
         docres = Document(None)
-        docres.char_vector = self.char_vector / val
+        docres.char_vector = encode_array(decode_array(self.char_vector) / val)
         return docres
 
     def read(self):
@@ -94,11 +96,7 @@ class Document(object):
         will raise TypeError in that case.
         """
 
-        if isinstance(value, type(array(None))):
-            self._char_vector = value
-        else:
-            raise TypeError("expected a numpy.array but got %s instead." %
-                    type(value))
+        self._char_vector = value
 
     @property
     def filename(self):
