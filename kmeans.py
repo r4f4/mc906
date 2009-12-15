@@ -21,9 +21,10 @@ def choose_initial_pp(data, k, distfunc):
     :distfunc Function to calculate the distance between two elements.
     """
     from bisect import bisect
+    from numpy import add
 
     # Calculate squared distance
-    distance2 = lambda c, x: distfunc(c, x)
+    distance2 = lambda c, x: distfunc(c, x)**2
 
     # The first centroid is a random one
     centroids = [random.choice(data)]
@@ -35,13 +36,8 @@ def choose_initial_pp(data, k, distfunc):
         # Divide because we add it twice: first for (c, x) and then for (x, c)
         totaldist = float(sum(d for d, _ in mindists))
         probs = [(d / totaldist) for d, _ in mindists]
-        addedProb = []
-        last = 0
-        for p in probs:
-            last += p
-            addedProb.append(last)
-        pos = bisect(addedProb, random.random())
-        centroids.append(data[pos])
+        pos = bisect(add.accumulate(probs), random.random())
+        centroids.append(mindists[pos][1])
         tries += 1
 
     if len(centroids) < k:
@@ -72,6 +68,8 @@ class Kmeans(object):
 
         assert distfunc is not None, "distfunc can't be None"
         assert centroidfunc is not None, "centroidfunc can't be None"
+        assert data is not None, "data can't be None"
+        assert k > 0, "number of clusters can't be 0 or negative"
 
         self.centroids = chooser(data, k, distfunc)
 
