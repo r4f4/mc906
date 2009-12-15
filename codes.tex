@@ -1,0 +1,48 @@
+\documentclass[pdftex, 10pt, a4paper]{article}
+
+\usepackage[pdftex]{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{color}
+\usepackage{listings}
+
+\lstset{ %
+    language=python,
+    basicstyle=\footnotesize,
+    numbers=left,
+    numberstyle=\footnotesize,
+    stepnumber=5,
+    numbersep=5pt,
+    backgroundcolor=\color{white},
+    showspaces=false,
+    showstringspaces=false,
+    frame=single,
+    tabsize=4,
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    escapeinside={\%*}{*)}
+}
+
+\title{Códigos-fonte do projeto}
+\date{15 de dezembro de 2009}
+\author{ Rafael Fonseca dos Santos - RA 072146 \and Victor Matheus Araújo - RA 072589}
+
+\begin{document}
+
+\maketitle
+
+\lstinputlisting[label=kmeans, caption=Código comentado do
+    kmeans]{kmeans.py}
+
+\lstinputlisting[label=parse, caption=Código comentado do
+    parsing dos arquivos]{parse.py}
+
+\lstinputlisting[label=util, caption=Funções úteis]{util.py}
+
+\lstinputlisting[label=main, caption=Função principal]{main.py}
+
+\lstinputlisting[label=Stemmer, caption=Classe para extrair radical
+    das palavras]{Stemmer.py}
+
+\end{document}
