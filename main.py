@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import os
+import gc
 import numpy
-import pickle
-import sys
-from kmeans import Kmeans, choose_initial, choose_initial_pp
-from parse import Parser, decode_document, encode_document
+from util import *
 from re import split
-from util import distance, calc_centroid, normalize, get_clusters
-from gc import collect
+from sys import stdout
+from parse import Parser
+from operator import itemgetter
+from kmeans import Kmeans, choose_initial, choose_initial_pp
 
 # Path to the directory containing the messages
 path = './cluster-txt/messages/'
@@ -26,10 +26,12 @@ def get_docs_frequencies(clusters):
     docs = []
     for c in clusters:
         freq = {}
-        for doc in c:
+        for encoded_doc in c:
+            doc = decode_document(encoded_doc)
             name = os.path.basename(split(r'-[0-9]+.txt$', doc.filename)[0])
             freq[name] = freq.get(name, 0) + 1
         docs.append(freq)
+        gc.collect()
     return docs
 
 def calc_error(freqs):
@@ -40,52 +42,34 @@ def calc_error(freqs):
         errors.append(err)
     return errors
 
-def parsefiles(filelist):
-    print 'Parsing files using stemming...',
-    parser = Parser(fstopname)
-    parser.parse(filelist, True)
-    with open(fname_stemmed, 'w') as f:
-        pickle.dump(parser, f)
-    del parser
-    collect()
-    print 'done'
-    print 'Parsing file whithout stemming...',
-    parser = Parser(fstopname)
-    parser.parse(filelist, False)
-    with open(fname, 'w') as f:
-        pickle.dump(parser, f)
-    del parser
-    collect()
-    print 'done'
+def slice_sorted_words(dictio, delpercent):
+    """
+    Function to return a sorted version of a dictionary sorted
+    by values and sliced in the beginning and end by delpercent
+    """
+
+    n = int((len(dictio) * (delpercent / 100.0)) / 2)
+    return dict(sorted(dictio.iteritems(),
+                key=itemgetter(1))[n:len(dictio) - n])
 
 
 if __name__ == "__main__":
     filelist = [(path + f) for f in os.listdir(path)]
 
-    print 'Files need parsing:',
-    if not (os.path.exists(fname_stemmed) or os.path.exists(fname)):
-        print 'yes'
-        parsefiles(filelist)
-    else:
-        print 'no'
-
+    parser = Parser(fstopname)
     for stem in True, False:
-        if stem is True:
-            with open(fname_stemmed, 'r') as f:
-                parser = pickle.load(f)
-        else:
-            with open(fname, 'r') as f:
-                parser = pickle.load(f)
+        print 'Parsing files...',
+        parser.parse(filelist, stem)
+        # Ignore the 10% least and most frequent words
+        parser.words = slice_sorted_words(parser.words, 10)
+        print 'done'
         for idf in True, False:
             print 'Normalizing frequencies...',
-            sys.stdout.flush()
-            for i, encoded_d in enumerate(parser.docset):
-                print i
-                doc = decode_document(encoded_d)
+            stdout.flush()
+            for i, doc in enumerate(parser.docset):
                 normalize(doc, parser.words, idf)
                 parser.docset[i] = encode_document(doc)
-                collect()
-
+            gc.collect()
             print 'done'
             for chooser in choose_initial_pp, choose_initial:
                 for k in 10, 20, 30, 40:
@@ -97,7 +81,7 @@ if __name__ == "__main__":
                         print 'Chooser: normal'
                     else:
                         print 'Chooser: plusplus'
-                    sys.stdout.flush()
+                    stdout.flush()
                     for _ in xrange(13):
                         kmeans = Kmeans(parser.docset, k, distance,
                                 calc_centroid, chooser)
@@ -106,6 +90,4 @@ if __name__ == "__main__":
                         errors.append(sum(calc_error(freqs)))
                     print 'Error mean: %d and median: %d' % \
                         (numpy.mean(errors), numpy.median(errors))
-                    collect()
-        del parser
-        collect()
+            gc.collect()
