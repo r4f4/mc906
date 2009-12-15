@@ -1,6 +1,6 @@
 from re import split
 from numpy import dot, array
-from util import norm, stemWord
+from util import norm, stemWord, encode_array, decode_array
 
 class Document(object):
     """

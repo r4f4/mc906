@@ -62,7 +62,7 @@ if __name__ == "__main__":
             use_stemming = True
 
     print 'use stemming: %d' % use_stemming
-    
+
     filelist = [(path + f) for f in os.listdir(path)]
 
     parser = Parser(fstopname)
@@ -70,8 +70,8 @@ if __name__ == "__main__":
         for idf in True, False:
             print 'Parsing files...',
             stdout.flush()
-            parser.parse(filelist, stem)
-            # Ignore the 10% least and most frequent words
+            parser.parse(filelist[:10000], stem)
+            # Ignore the 30% least and most frequent words
             parser.words = slice_sorted_words(parser.words, 30)
             print 'done'
 
@@ -84,8 +84,8 @@ if __name__ == "__main__":
             gc.collect()
             print 'done'
 
-            for chooser in choose_initial_pp, choose_initial:
-                for k in 10, 20, 30, 40:
+            for chooser in [choose_initial]: #choose_initial_pp, choose_initial:
+                for k in [10]:
                     errors = []
                     print '\nStemming words: %s' % stem
                     print 'Using IDF: %s' % idf
@@ -97,7 +97,7 @@ if __name__ == "__main__":
                     stdout.flush()
                     for _ in xrange(13):
                         kmeans = Kmeans(parser.docset, k, distance,
-                                        calc_centroid, chooser)
+                                        calc_centroid, chooser, tol=0.001)
                         clusters = get_clusters(kmeans.result(), parser.docset)
                         freqs = get_docs_frequencies(clusters)
                         errors.append(sum(calc_error(freqs)))

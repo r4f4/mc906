@@ -2,7 +2,7 @@ import zlib
 import cPickle
 from math import sqrt
 from Stemmer import Stemmer
-from numpy import dot, array
+from numpy import dot, array, fromstring
 from cStringIO import StringIO
 
 # Keep just one instance of this
@@ -56,7 +56,7 @@ def decode_array(compressed_str):
     """
 
     uncompressed_str = zlib.decompress(compressed_str)
-    return numpy.fromstring(uncompressed_str)
+    return fromstring(uncompressed_str)
 
 @memoize2
 def distance(doc1, doc2):
@@ -68,8 +68,8 @@ def distance(doc1, doc2):
     dist = cos(d1, d2) = (d1 . d2) / ||d1|| ||d2||
     """
 
-    char_vec1 = decode_array(doc1.char_vector)
-    char_vec2 = decode_array(doc2.char_vector)
+    char_vector1 = decode_array(doc1.char_vector)
+    char_vector2 = decode_array(doc2.char_vector)
 
     assert isinstance(doc1, type(doc2)), \
            "objects type mismatch: %s and %s." % (type(doc1), type(doc2))
