@@ -32,12 +32,12 @@ def choose_initial_pp(data, k, distfunc):
     tries = 0
     while len(centroids) < k and tries < (k * 5):
         mindists = [min((distance2(c, x), x) for c in centroids)
-                    for x in data]
+                    for x in data if x not in centroids]
         # Divide because we add it twice: first for (c, x) and then for (x, c)
         totaldist = float(sum(d for d, _ in mindists))
         probs = [(d / totaldist) for d, _ in mindists]
         pos = bisect(add.accumulate(probs), random.random())
-        centroids.append(mindists[pos][1])
+        centroids.append(mindists[pos - 1][1])
         tries += 1
 
     if len(centroids) < k:

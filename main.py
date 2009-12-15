@@ -58,19 +58,23 @@ if __name__ == "__main__":
 
     parser = Parser(fstopname)
     for stem in True, False:
-        print 'Parsing files...',
-        parser.parse(filelist, stem)
-        # Ignore the 10% least and most frequent words
-        parser.words = slice_sorted_words(parser.words, 10)
-        print 'done'
         for idf in True, False:
+            print 'Parsing files...',
+            stdout.flush()
+            parser.parse(filelist, stem)
+            # Ignore the 10% least and most frequent words
+            parser.words = slice_sorted_words(parser.words, 10)
+            print 'done'
+
             print 'Normalizing frequencies...',
             stdout.flush()
+            # Don't modify the original set
             for i, doc in enumerate(parser.docset):
                 normalize(doc, parser.words, idf)
-                parser.docset[i] = encode_document(doc)
+                parser.docset[i] = (encode_document(doc))
             gc.collect()
             print 'done'
+
             for chooser in choose_initial_pp, choose_initial:
                 for k in 10, 20, 30, 40:
                     errors = []
@@ -84,7 +88,7 @@ if __name__ == "__main__":
                     stdout.flush()
                     for _ in xrange(13):
                         kmeans = Kmeans(parser.docset, k, distance,
-                                calc_centroid, chooser)
+                                        calc_centroid, chooser)
                         clusters = get_clusters(kmeans.result(), parser.docset)
                         freqs = get_docs_frequencies(clusters)
                         errors.append(sum(calc_error(freqs)))

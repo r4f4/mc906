@@ -43,14 +43,14 @@ def stemWord(word):
 def norm(vector):
     return sqrt(dot(vector, vector.conj()))
 
-def encode_document(doc):
+def encode_document(doc, factor=5):
     """
     Serialize and compress a document so we can use less memory
     """
 
     s = StringIO()
     cPickle.dump(doc, s)
-    compressed_str = zlib.compress(s.getvalue())
+    compressed_str = zlib.compress(s.getvalue(), factor)
     return compressed_str
 
 def decode_document(compressed_str):
