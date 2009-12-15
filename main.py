@@ -70,7 +70,7 @@ if __name__ == "__main__":
         for idf in True, False:
             print 'Parsing files...',
             stdout.flush()
-            parser.parse(filelist[:10000], stem)
+            parser.parse(filelist, stem)
             # Ignore the 30% least and most frequent words
             parser.words = slice_sorted_words(parser.words, 30)
             print 'done'
@@ -84,8 +84,8 @@ if __name__ == "__main__":
             gc.collect()
             print 'done'
 
-            for chooser in [choose_initial]: #choose_initial_pp, choose_initial:
-                for k in [10]:
+            for chooser in choose_initial, choose_initial_pp:
+                for k in 10, 20:
                     errors = []
                     print '\nStemming words: %s' % stem
                     print 'Using IDF: %s' % idf
